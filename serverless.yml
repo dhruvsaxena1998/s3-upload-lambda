@@ -1,13 +1,22 @@
-service: aws-serverless
+service: aws-serverless-upload
 frameworkVersion: "3"
 
 custom:
-  bucket: "serverless-media-bucket-s3"
+  bucket: "sls-media-bucket"
 
 provider:
   name: aws
   runtime: nodejs14.x
   region: ap-south-1
+  logRetentionInDays: 7
+  httpApi:
+    cors:
+      allowedOrigins: "*"
+      allowedHeaders: "*"
+      allowedMethods:
+        - GET
+        - POST
+        - OPTIONS
   iam:
     role:
       statements:
@@ -18,6 +27,12 @@ provider:
           Resource:
             - arn:aws:s3:::${self:custom.bucket}/*
 
+package:
+  individually: true
+
+plugins:
+  - serverless-offline
+
 functions:
   upload:
     handler: handler.handler
@@ -26,8 +41,8 @@ functions:
 
 resources:
   Resources:
-    MediaUploadBucket:
+    SLSMediaBucket:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: ${self:custom.bucket}
-        AccessControl: PublicRead
+        AccessControl: Private
