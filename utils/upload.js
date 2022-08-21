@@ -1,10 +1,15 @@
 const AWS = require("aws-sdk");
 const nanoid = require("nanoid-esm");
-const mimetype = require("mime-types");
 
 const s3 = new AWS.S3();
 
 const BUCKET = "sls-media-bucket";
+
+const getDirectoryWithDate = () => {
+  const date = new Date();
+  // @returns -> 2022/7
+  return `${date.getFullYear()}/${date.getMonth()}`;
+};
 
 /**
  *
@@ -14,12 +19,11 @@ const uploadByFile = async (file) => {
   const uploadParams = {
     Bucket: BUCKET,
     Body: file.buffer,
-    Key: nanoid() + "." + mimetype.extension(file.mimetype),
+    Key: `${getDirectoryWithDate()}/${nanoid()}-${file.originalname}`,
     ContentType: file.mimetype,
+    ACL: "public-read",
   };
-  console.log(uploadParams);
-  const data = await s3.upload(uploadParams).promise();
-  return { ...uploadParams, ...data };
+  return s3.upload(uploadParams).promise();
 };
 
 /**
@@ -32,8 +36,7 @@ const getSignedUrl = async (key) => {
     Key: key,
   };
 
-  const signedUrl = s3.getSignedUrl("getObject", getSignedParams);
-  return signedUrl;
+  return s3.getSignedUrl("getObject", getSignedParams);
 };
 
 module.exports = {
